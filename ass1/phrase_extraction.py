@@ -62,7 +62,7 @@ def phrase_extraction():
                         phrases_f[phrase_de] += 1
                         phrases_f_e[(phrase_de,phrase_en)] += 1
     #double-check output!!  
-    phrases_file = open("phrases.txt","w")p
+    phrases_file = open("phrases.txt","w")
     for f,e in phrases_f_e:
         phrases_file.write(f + " ||| " + e + " ||| " +  str(phrases_f[f]) + " " + str(phrases_e[e]) + " " + str(phrases_f_e[(f,e)]) + "\n")
     phrases_file.close()
