@@ -4,7 +4,7 @@ def transition_probabilities():
     print 'start'
     with open('phrases.txt', 'r') as phrases_file: #open the file
         phrases = phrases_file.readlines()    
-    
+    i=0
     with open("transition_probs.txt","w") as probs_file:
         for line in phrases:
             f,e, probs = line.split("|||")

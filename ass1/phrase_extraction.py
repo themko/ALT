@@ -12,9 +12,9 @@ def phrase_extraction():
     phrases_e = defaultdict(int)
     phrases_f = defaultdict(int)
     phrases_f_e = defaultdict(int)
-    
+    alignments_f_e= {}
     #Extract phrases
-    for e_line,f_line,al_line in zip(e_lines,f_lines,al_lines):
+    for e_line,f_line,al_line in zip(e_lines,f_lines,al_lines)[0:10]:
         e_words = e_line.split()
         f_words = f_line.split()
         al_pairs = al_line.split()
@@ -39,10 +39,14 @@ def phrase_extraction():
                 # all alignment links of the English candidate phrase
                 for pos in candidate_phrase_e:
                     candidate_phrase_f += alignDictEF[pos]
-                #Check if if alignment-link exists
-                if len(candidate_phrase_f) > 0:
-                    candidate_phrase_f =  list(set(candidate_phrase_f))
+                #We fill in the positions between alignments 
+                #print 'cpf_pre', candidate_phrase_f
+                if candidate_phrase_f != []:
+                    candidate_phrase_f = range(min(candidate_phrase_f),max(candidate_phrase_f)+1)
+                    #print 'cpf',candidate_phrase_f
+                
                     # Look at alignments links of foreign phrase
+                    #print candidate_phrase_f
                     for pos in candidate_phrase_f:
                         f_to_e_align += alignDictFE[pos]
                     f_to_e_align = list(set(f_to_e_align))
@@ -54,17 +58,40 @@ def phrase_extraction():
                         phrase_f = ""
                         for pos in candidate_phrase_e:
                             phrase_e += e_words[pos] + " "
+                            
                         phrase_e = phrase_e.rstrip()
                         for pos in candidate_phrase_f:
                             phrase_f += f_words[pos] + " "
+                        
                         phrase_f = phrase_f.rstrip()
                         phrases_e[phrase_e] += 1
                         phrases_f[phrase_f] += 1
                         phrases_f_e[(phrase_f,phrase_e)] += 1
+                        
+                        #Output te
+                        f_start = candidate_phrase_f[0]
+                        e_start = candidate_phrase_e[0]
+                        new_alignments = []
+                        for f_pos in candidate_phrase_f:
+                            f_new = f_pos - f_start
+                            for e_pos in alignDictFE[f_pos]:
+                                e_new = e_pos - e_start
+                                new_alignments.append((f_new,e_new))
+                        alignments_f_e[(phrase_f,phrase_e)] = new_alignments
+                        
     #double-check output!!  
-    phrases_file = open("phrases2.txt","w")
-    for f,e in phrases_f_e:
-        phrases_file.write(f + " ||| " + e + " ||| " +  str(phrases_f[f]) + " " + str(phrases_e[e]) + " " + str(phrases_f_e[(f,e)]) + "\n")
-    phrases_file.close()
+    
+#    phrases_file = open("phrases.txt","w")
+#    for f,e in phrases_f_e:
+#        phrases_file.write(f + " ||| " + e + " ||| " +  str(phrases_f[f]) + " " + str(phrases_e[e]) + " " + str(phrases_f_e[(f,e)]) + "\n")
+#    phrases_file.close()
 
+    phrases_file = open("phrases_with_alignments.txt","w")
+    for f,e in phrases_f_e:
+        alignments_string = ""
+        for pair in alignments_f_e[(f,e)]:
+            alignments_string += str(pair[0]) + "-" + str(pair[1]) + " "
+        phrases_file.write(f + " ||| " + e + " ||| " +  str(phrases_f[f]) + " " + str(phrases_e[e]) + " " + str(phrases_f_e[(f,e)]) + " ||| " + alignments_string + "\n")
+    phrases_file.close()
+    
 phrase_extraction()
