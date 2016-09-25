@@ -16,6 +16,6 @@ def transition_probabilities():
             prob_e_given_f = float(prob_f_e) / float(prob_f)
             
             # Write line to file
-            probs_file.write(f + " ||| " + e + " ||| " +  str(prob_f_given_e) + " " + str(prob_e_given_f) + " ||| " + alignments + "\n")
+            probs_file.write(f + " ||| " + e + " ||| " +  str(prob_f_given_e) + " " + str(prob_e_given_f) + " ||| " + alignments)
 
 transition_probabilities()
