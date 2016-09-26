@@ -32,5 +32,5 @@ def combine():
             freq_f = dictF[f]
             freq_e = dictE[e]
             freq_f_e = dictFE[(f,e)]
-            combine_file.write(kmo_line.rstrip() + " ||| " + freq_f + freq_e + freq_f_e+"\n")
+            combine_file.write(kmo_line.rstrip() + " ||| " + freq_f +" "+ freq_e+" " + freq_f_e+"\n")
 combine()
