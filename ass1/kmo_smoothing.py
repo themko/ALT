@@ -80,74 +80,73 @@ def generate_word_translation_probabilities():
 def print_lexical_weighting(w_f_given_e, w_e_given_f):
     print "Calculating lexical weights..."
     with open('transition_probs_with_alignments.txt', 'r') as probs_file: #open the file
-        probs = probs_file.readlines()
-    with open('lexical_weights_with_alignments.txt','w') as lex_file:
-        for line in probs:
-            f,e, probs, alignments = line.split("|||")
-            alignments = alignments.lstrip()
-            prob_f_given_e, prob_e_given_f = probs.split()
-            
-            # Read alignments
-            al_pairs = alignments.split()
-            alignDictEF = defaultdict(list)
-            alignDictFE = defaultdict(list) 
-            for ali in al_pairs:
-                ali_pair = (tuple(ali.split('-')))
-                f_pos = int(ali_pair[0])
-                e_pos = int(ali_pair[1])
-                alignDictEF[e_pos].append(f_pos)
-                alignDictFE[f_pos].append(e_pos)
-            
-            # Calculate lexical weight lex(e|f)
-            lex_e_f = float(1)
-            e_words = e.split()
-            f_words = f.split()
-            e_positions = range(0,len(e_words))
-            for e_pos in e_positions:
-                link_score = 0        
-                # If nothing linked on f side, align with NULL  
-                if e_pos not in alignDictEF:
-                    e_word = e_words[e_pos]
-                    #print "+w(" + str(e_word) + "|NULL): " + str(w_e_given_f[(e_word,"NULL")])
-                    link_score += w_e_given_f[(e_word,"NULL")]
-                else:
-                    options = alignDictEF[e_pos]
-                    for f_pos in options:
+        with open('lexical_weights_with_alignments.txt','w') as lex_file:
+            for line in probs_file:
+                f,e, probs, alignments = line.split("|||")
+                alignments = alignments.lstrip()
+                prob_f_given_e, prob_e_given_f = probs.split()
+                
+                # Read alignments
+                al_pairs = alignments.split()
+                alignDictEF = defaultdict(list)
+                alignDictFE = defaultdict(list) 
+                for ali in al_pairs:
+                    ali_pair = (tuple(ali.split('-')))
+                    f_pos = int(ali_pair[0])
+                    e_pos = int(ali_pair[1])
+                    alignDictEF[e_pos].append(f_pos)
+                    alignDictFE[f_pos].append(e_pos)
+                
+                # Calculate lexical weight lex(e|f)
+                lex_e_f = float(1)
+                e_words = e.split()
+                f_words = f.split()
+                e_positions = range(0,len(e_words))
+                for e_pos in e_positions:
+                    link_score = 0        
+                    # If nothing linked on f side, align with NULL  
+                    if e_pos not in alignDictEF:
                         e_word = e_words[e_pos]
+                        #print "+w(" + str(e_word) + "|NULL): " + str(w_e_given_f[(e_word,"NULL")])
+                        link_score += w_e_given_f[(e_word,"NULL")]
+                    else:
+                        options = alignDictEF[e_pos]
+                        for f_pos in options:
+                            e_word = e_words[e_pos]
+                            f_word = f_words[f_pos]
+                            link_score += w_e_given_f[(e_word,f_word)]
+                            #print "+w(" + str(e_word) + "|" + str(f_word) + "): " + str(w_e_given_f[(e_word,f_word)])
+                        # Divide link score by number of options
+                        link_score *= 1/float(len(options))
+                    #print "Link score: " + str(link_score)
+                    lex_e_f *= link_score
+                #print "Lex(e|f):" + str(lex_e_f)
+                
+                # Calculate lexical weight lex(f|e)
+                lex_f_e = float(1)
+                f_positions = range(0,len(f_words))
+                for f_pos in f_positions:
+                    link_score = 0        
+                    # If nothing linked on e side, align with NULL  
+                    #### TODO: Is this needed at this side?
+                    if f_pos not in alignDictFE:
                         f_word = f_words[f_pos]
-                        link_score += w_e_given_f[(e_word,f_word)]
-                        #print "+w(" + str(e_word) + "|" + str(f_word) + "): " + str(w_e_given_f[(e_word,f_word)])
-                    # Divide link score by number of options
-                    link_score *= 1/float(len(options))
-                #print "Link score: " + str(link_score)
-                lex_e_f *= link_score
-            #print "Lex(e|f):" + str(lex_e_f)
-            
-            # Calculate lexical weight lex(f|e)
-            lex_f_e = float(1)
-            f_positions = range(0,len(f_words))
-            for f_pos in f_positions:
-                link_score = 0        
-                # If nothing linked on e side, align with NULL  
-                #### TODO: Is this needed at this side?
-                if f_pos not in alignDictFE:
-                    f_word = f_words[f_pos]
-                    #print "+w(" + str(f_word) + "|NULL): " + str(w_f_given_e[(f_word,"NULL")])
-                    link_score += w_f_given_e[(f_word,"NULL")]
-                else:
-                    options = alignDictFE[f_pos]
-                    for e_pos in options:
-                        f_word = f_words[f_pos]
-                        e_word = e_words[e_pos]
-                        link_score += w_f_given_e[(f_word,e_word)]
-                        #print "+w(" + str(f_word) + "|" + str(e_word) + "): " + str(w_f_given_e[(f_word,e_word)])
-                    # Divide link score by number of options
-                    link_score *= 1/float(len(options))
-                #print "Link score: " + str(link_score)
-                lex_f_e *= link_score
-            #print "Lex(f|e):" + str(lex_f_e)
-            # Write line to file
-            lex_file.write(f + " ||| " + e + " ||| " +  str(prob_f_given_e) + " " + str(prob_e_given_f) + " " + str(lex_f_e) + " " + str(lex_e_f) + " ||| " + alignments)
+                        #print "+w(" + str(f_word) + "|NULL): " + str(w_f_given_e[(f_word,"NULL")])
+                        link_score += w_f_given_e[(f_word,"NULL")]
+                    else:
+                        options = alignDictFE[f_pos]
+                        for e_pos in options:
+                            f_word = f_words[f_pos]
+                            e_word = e_words[e_pos]
+                            link_score += w_f_given_e[(f_word,e_word)]
+                            #print "+w(" + str(f_word) + "|" + str(e_word) + "): " + str(w_f_given_e[(f_word,e_word)])
+                        # Divide link score by number of options
+                        link_score *= 1/float(len(options))
+                    #print "Link score: " + str(link_score)
+                    lex_f_e *= link_score
+                #print "Lex(f|e):" + str(lex_f_e)
+                # Write line to file
+                lex_file.write(f + " ||| " + e + " ||| " +  str(prob_f_given_e) + " " + str(prob_e_given_f) + " " + str(lex_f_e) + " " + str(lex_e_f) + " ||| " + alignments)
 
     
 def kmo_smoothing():
