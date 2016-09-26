@@ -14,7 +14,7 @@ def phrase_extraction():
     phrases_f_e = defaultdict(int)
     alignments_f_e= {}
     #Extract phrases
-    for e_line,f_line,al_line in zip(e_lines,f_lines,al_lines)[0:10]:
+    for e_line,f_line,al_line in zip(e_lines,f_lines,al_lines):
         e_words = e_line.split()
         f_words = f_line.split()
         al_pairs = al_line.split()
