@@ -24,14 +24,15 @@ def phrase_extraction():
             ali_pair = (tuple(ali.split('-')))
             f_pos = int(ali_pair[0])
             e_pos = int(ali_pair[1])
+            # Save alignment links to dictionaries, in two directions
             alignDictFE[f_pos].append(e_pos)
             alignDictEF[e_pos].append(f_pos)
             
         phrases = []
-        #TODO: 2 for loops perhapse too costly...
         for e_ind in range(0,len(e_words)):
             for cur_e_ind in range(e_ind,len(e_words)):
-                # Generate English candidate phrases by looking at all consecutive sequences
+                # Generate English candidate phrases, by looking at all
+                # consecutive sequences of English words.
                 candidate_phrase_e = range(e_ind,cur_e_ind+1)
                 candidate_phrase_f = []
                 f_to_e_align = []
@@ -39,14 +40,13 @@ def phrase_extraction():
                 # all alignment links of the English candidate phrase
                 for pos in candidate_phrase_e:
                     candidate_phrase_f += alignDictEF[pos]
-                #We fill in the positions between alignments 
-                #print 'cpf_pre', candidate_phrase_f
+                # Check if there are any alignment links
                 if candidate_phrase_f != []:
+                    # We take the whole range, so also unaligned positions
+                    # in between
                     candidate_phrase_f = range(min(candidate_phrase_f),max(candidate_phrase_f)+1)
-                    #print 'cpf',candidate_phrase_f
                 
-                    # Look at alignments links of foreign phrase
-                    #print candidate_phrase_f
+                    # Look at alignments links of foreign candidate phrase
                     for pos in candidate_phrase_f:
                         f_to_e_align += alignDictFE[pos]
                     f_to_e_align = list(set(f_to_e_align))
@@ -54,6 +54,7 @@ def phrase_extraction():
                     # Check if there are no links to English words
                     # outside the English candidate phrase
                     if len(set(len_check))<= len(candidate_phrase_e):
+                        # Phrase pair accepted as valid
                         phrase_e = ""
                         phrase_f = ""
                         for pos in candidate_phrase_e:
@@ -64,11 +65,13 @@ def phrase_extraction():
                             phrase_f += f_words[pos] + " "
                         
                         phrase_f = phrase_f.rstrip()
+                        # Keep track of counts
                         phrases_e[phrase_e] += 1
                         phrases_f[phrase_f] += 1
                         phrases_f_e[(phrase_f,phrase_e)] += 1
                         
-                        #Output te
+                        # Convert alignments to phrase space:
+                        # start with 0 at beginning of phrase
                         f_start = candidate_phrase_f[0]
                         e_start = candidate_phrase_e[0]
                         new_alignments = []
@@ -78,15 +81,9 @@ def phrase_extraction():
                                 e_new = e_pos - e_start
                                 new_alignments.append((f_new,e_new))
                         alignments_f_e[(phrase_f,phrase_e)] = new_alignments
-                        
-    #double-check output!!  
-    
-#    phrases_file = open("phrases.txt","w")
-#    for f,e in phrases_f_e:
-#        phrases_file.write(f + " ||| " + e + " ||| " +  str(phrases_f[f]) + " " + str(phrases_e[e]) + " " + str(phrases_f_e[(f,e)]) + "\n")
-#    phrases_file.close()
 
     phrases_file = open("phrases_with_alignments.txt","w")
+    print "Writing phrases to file..."
     for f,e in phrases_f_e:
         alignments_string = ""
         for pair in alignments_f_e[(f,e)]:

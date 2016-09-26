@@ -1,9 +1,9 @@
 from collections import defaultdict
 
-def transition_probabilities():
+def translation_probabilities():
     print 'start'
     with open('phrases_with_alignments.txt', 'r') as phrases_file: #open the file    
-        with open("transition_probs_with_alignments.txt","w") as probs_file:
+        with open("translation_probs_with_alignments.txt","w") as probs_file:
             for line in phrases_file:
                 f,e, probs, alignments = line.split("|||")
                 prob_f, prob_e, prob_f_e = probs.split()
@@ -16,4 +16,4 @@ def transition_probabilities():
                 # Write line to file
                 probs_file.write(f + " ||| " + e + " ||| " +  str(prob_f_given_e) + " " + str(prob_e_given_f) + " ||| " + alignments)
 
-transition_probabilities()
+translation_probabilities()
