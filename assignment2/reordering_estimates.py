@@ -5,16 +5,23 @@ def reordering_estimates():
     with open('file.en', 'r') as e_file: #open the file
         with open('file.de', 'r') as f_file: #open the file    
             with open('file.aligned', 'r') as a_file: #open the file
-        
                 phrases_e = defaultdict(int)
                 phrases_f = defaultdict(int)
                 phrases_f_e = defaultdict(int)
+                
+                monotone_LR = defaultdict(int)
+                swap_LR = defaultdict(int)
+                discontinuous_LR = defaultdict(int)
+                
+                monotone_RL = defaultdict(int)
+                swap_RL = defaultdict(int)
+                discontinuous_RL = defaultdict(int)      
+                          
                 alignments_f_e= {}
                 #Extract phrases
-                for e_line,f_line,al_line in zip(e_file,f_file,a_file)[0:1]:
+                for e_line,f_line,al_line in zip(e_file,f_file,a_file)[5:6]:
                     phrases_per_line_start = {}
                     phrases_per_line_end = {}
-
                     e_words = e_line.split()
                     f_words = f_line.split()
                     al_pairs = al_line.split()
@@ -36,7 +43,7 @@ def reordering_estimates():
                             candidate_phrase_e = range(e_ind,cur_e_ind+1)
                             #Disregard phrases longer than 7
                             if len(candidate_phrase_e)>7:
-                                break
+                                continue
                             candidate_phrase_f = []
                             f_to_e_align = []
                             # Generate foreign candidate phrase based on
@@ -80,23 +87,88 @@ def reordering_estimates():
                                     phrases_per_line_start[(e1)] = ((phrase_f,f1,f2),(phrase_e,e1,e2))
                                     phrases_per_line_end[(e2)] = ((phrase_f,f1,f2),(phrase_e,e1,e2))
 
-##                    print f_line
-##                    print e_line
-##                    print "phrases per line:"
-##                    for i in phrases_per_line:
-##                        print i
-##                    print
-                    #Run through phrases left-to-right
-                    #Foreach e check the f position of the next e (null=d, +1 m, -1= s)
-##                    Are the really properly defined if several opptions exist, and we choice based on absences?
-                    counterLR = 0
+##                    Are the really properly defined if several options exist, and we choice based on absences?
                     print e_line
                     #Run through all phrases of the e-sentence 
-                    #len(e_line)
-                    for phrases in phrases_per_line:
-                        
+                    print phrases_per_line_start
+                    #Iterate L->R over starting positiong of e-phrases
+                    for key in phrases_per_line_start.iterkeys():
+                        print''
+                        print 'key',key,'phrases',phrases_per_line_start[key]
+                        f_index = phrases_per_line_start[key][0][0]
+                        e_index = phrases_per_line_start[key][1][0]
                         #Check all phrases with this starting position
+                        #NOT NECESSARY IN FEW EXAMMPLES ALL KEYS UNIQUE ENTRIES, MIGHT CHANGE!!
                         
+                        #For english phrases check next position
+                        end_e_phrase = (phrases_per_line_start[key][1][2])
+                        begin_e_phrase = (phrases_per_line_start[key][1][1])
+                        end_f_phrase = (phrases_per_line_start[key][0][2])
+                        begin_f_phrase = (phrases_per_line_start[key][0][1])
+                        #Ignore l-r checks for e-phrases at the end of the sentence
+                        if(end_e_phrase == len(e_words)-1):
+                            print 'end of sentence'
+                            continue
+                        #What is next e-row is empty?? 
+                        if(end_e_phrase+1 not in phrases_per_line_start.keys() ):
+                            print 'EMPTY'
+                            continue
+                        print 'next e_phrase', phrases_per_line_start[end_e_phrase +1]
+                        #IS THIS WORKING PROPERLY?
+                        begin_f_next_phrase = phrases_per_line_start[end_e_phrase +1][0][1]
+                        end_f_next_phrase = phrases_per_line_start[end_e_phrase +1][0][2]
+                        #Check for monotone,swap,discontinuous
+                        if(begin_f_next_phrase == end_f_phrase +1):
+                            print 'LR monotone'
+                            monotone_LR[(f_index,e_index)] +=1
+                        elif(begin_f_phrase == end_f_next_phrase+1):
+                            print 'LR swap'
+                            swap_LR[(f_index,e_index)] +=1
+                        else:
+                            print 'LR discontinuous'
+                            discontinuous_LR[(f_index,e_index)] +=1
+                            
+                    ##THIS STILL NOT WORKING PROPERLY
+                    #Iterate R->L over starting positiong of e-phrases
+                    for key in phrases_per_line_start.iterkeys():
+                        print''
+                        print 'key',key,'phrases',phrases_per_line_start[key]
+                        f_index = phrases_per_line_start[key][0][0]
+                        e_index = phrases_per_line_start[key][1][0]
+                        #Check all phrases with this starting position
+                        #NOT NECESSARY IN FEW EXAMMPLES ALL KEYS UNIQUE ENTRIES, MIGHT CHANGE!!
+                        
+                        #For english phrases check next position
+                        end_e_phrase = (phrases_per_line_start[key][1][2])
+                        begin_e_phrase = (phrases_per_line_start[key][1][1])
+                        end_f_phrase = (phrases_per_line_start[key][0][2])
+                        begin_f_phrase = (phrases_per_line_start[key][0][1])
+                        #Ignore l-r checks for e-phrases at the end of the sentence
+                        if(begin_e_phrase == 0):
+                            print 'start of sentence'
+                            continue
+                        #What is next e-row is empty?? 
+                        #For instance in cases where there is no non-overlapping phrase before the start of the sentence
+                        if(end_e_phrase-1 not in phrases_per_line_end.keys() ):
+                            print 'EMPTY'
+                            continue
+                        print 'previous e_phrase', phrases_per_line_end[begin_e_phrase -1]
+                        ###DOUBLE CHECK THESE
+                        begin_f_previous_phrase = phrases_per_line_start[end_e_phrase -1][0][1]
+                        end_f_previous_phrase = phrases_per_line_end[begin_e_phrase -1][0][2]
+                        
+                        ###NDOUBLE-CHECK NEW CONDITIONS
+                        #Check conditions
+                        if(end_f_previous_phrase == begin_f_phrase -1):
+                            print 'RL monotone'
+                            monotone_RL[(f_index,e_index)] +=1
+                        elif(begin_f_phrase == end_f_previous_phrase-1):
+                            print 'RL swap'
+                            swap_RL[(f_index,e_index)] +=1
+                        else:
+                            print 'RL discontinuous'
+                            discontinuous_RL[(f_index,e_index)] +=1
+                print 'mono',monotone_LR, monotone_RL
                 phrases_file = open("reorder_est.txt","w")
                 print "Writing phrases to file..."
                 for f,e in phrases_f_e:
