@@ -88,23 +88,24 @@ def reordering_estimates():
                                     phrases_per_line_end[(e2)] = ((phrase_f,f1,f2),(phrase_e,e1,e2))
 
 ##                    Are the really properly defined if several options exist, and we choice based on absences?
-                    print e_line
+                    print f_line.strip()
+                    print e_line.rstrip()
                     #Run through all phrases of the e-sentence 
-                    print phrases_per_line_start
+                    print
+                    print "L->R:"
                     #Iterate L->R over starting positiong of e-phrases
-                    for key in phrases_per_line_start.iterkeys():
-                        print''
-                        print 'key',key,'phrases',phrases_per_line_start[key]
-                        f_index = phrases_per_line_start[key][0][0]
-                        e_index = phrases_per_line_start[key][1][0]
+                    for start_pos_e in phrases_per_line_start.keys():
+                        print 'start_pos_e',start_pos_e,'phrases:',phrases_per_line_start[start_pos_e]
+                        f_word = phrases_per_line_start[start_pos_e][0][0]
+                        e_word = phrases_per_line_start[start_pos_e][1][0]
                         #Check all phrases with this starting position
                         #NOT NECESSARY IN FEW EXAMMPLES ALL KEYS UNIQUE ENTRIES, MIGHT CHANGE!!
                         
                         #For english phrases check next position
-                        end_e_phrase = (phrases_per_line_start[key][1][2])
-                        begin_e_phrase = (phrases_per_line_start[key][1][1])
-                        end_f_phrase = (phrases_per_line_start[key][0][2])
-                        begin_f_phrase = (phrases_per_line_start[key][0][1])
+                        end_e_phrase = (phrases_per_line_start[start_pos_e][1][2])
+                        begin_e_phrase = (phrases_per_line_start[start_pos_e][1][1])
+                        end_f_phrase = (phrases_per_line_start[start_pos_e][0][2])
+                        begin_f_phrase = (phrases_per_line_start[start_pos_e][0][1])
                         #Ignore l-r checks for e-phrases at the end of the sentence
                         if(end_e_phrase == len(e_words)-1):
                             print 'end of sentence'
@@ -120,29 +121,31 @@ def reordering_estimates():
                         #Check for monotone,swap,discontinuous
                         if(begin_f_next_phrase == end_f_phrase +1):
                             print 'LR monotone'
-                            monotone_LR[(f_index,e_index)] +=1
+                            monotone_LR[(f_word,e_word)] +=1
                         elif(begin_f_phrase == end_f_next_phrase+1):
                             print 'LR swap'
-                            swap_LR[(f_index,e_index)] +=1
+                            swap_LR[(f_word,e_word)] +=1
                         else:
                             print 'LR discontinuous'
-                            discontinuous_LR[(f_index,e_index)] +=1
-                            
+                            discontinuous_LR[(f_word,e_word)] +=1
+                        print
+                    
+                    print
+                    print "R->L:"
                     ##THIS STILL NOT WORKING PROPERLY
-                    #Iterate R->L over starting positiong of e-phrases
-                    for key in phrases_per_line_start.iterkeys():
-                        print''
-                        print 'key',key,'phrases',phrases_per_line_start[key]
-                        f_index = phrases_per_line_start[key][0][0]
-                        e_index = phrases_per_line_start[key][1][0]
-                        #Check all phrases with this starting position
+                    #Iterate R->L over end positiong of e-phrases
+                    for end_pos_e in reversed(phrases_per_line_end.keys()):
+                        print 'end_pos_e',end_pos_e,'phrases:',phrases_per_line_end[end_pos_e]
+                        f_word = phrases_per_line_end[end_pos_e][0][0]
+                        e_word = phrases_per_line_end[end_pos_e][1][0]
+                        #Check all phrases with this ending position
                         #NOT NECESSARY IN FEW EXAMMPLES ALL KEYS UNIQUE ENTRIES, MIGHT CHANGE!!
                         
                         #For english phrases check next position
-                        end_e_phrase = (phrases_per_line_start[key][1][2])
-                        begin_e_phrase = (phrases_per_line_start[key][1][1])
-                        end_f_phrase = (phrases_per_line_start[key][0][2])
-                        begin_f_phrase = (phrases_per_line_start[key][0][1])
+                        end_e_phrase = (phrases_per_line_end[end_pos_e][1][2])
+                        begin_e_phrase = (phrases_per_line_end[end_pos_e][1][1])
+                        end_f_phrase = (phrases_per_line_end[end_pos_e][0][2])
+                        begin_f_phrase = (phrases_per_line_end[end_pos_e][0][1])
                         #Ignore l-r checks for e-phrases at the end of the sentence
                         if(begin_e_phrase == 0):
                             print 'start of sentence'
@@ -154,20 +157,21 @@ def reordering_estimates():
                             continue
                         print 'previous e_phrase', phrases_per_line_end[begin_e_phrase -1]
                         ###DOUBLE CHECK THESE
-                        begin_f_previous_phrase = phrases_per_line_start[end_e_phrase -1][0][1]
-                        end_f_previous_phrase = phrases_per_line_end[begin_e_phrase -1][0][2]
+                        begin_f_previous_phrase = phrases_per_line_end[end_e_phrase -1][0][1]
+                        end_f_previous_phrase = phrases_per_line_end[end_e_phrase -1][0][2]
                         
                         ###NDOUBLE-CHECK NEW CONDITIONS
                         #Check conditions
                         if(end_f_previous_phrase == begin_f_phrase -1):
                             print 'RL monotone'
-                            monotone_RL[(f_index,e_index)] +=1
+                            monotone_RL[(f_word,e_word)] +=1
                         elif(begin_f_phrase == end_f_previous_phrase-1):
                             print 'RL swap'
-                            swap_RL[(f_index,e_index)] +=1
+                            swap_RL[(f_word,e_word)] +=1
                         else:
                             print 'RL discontinuous'
-                            discontinuous_RL[(f_index,e_index)] +=1
+                            discontinuous_RL[(f_word,e_word)] +=1
+                        print
                 print 'mono',monotone_LR, monotone_RL
                 phrases_file = open("reorder_est.txt","w")
                 print "Writing phrases to file..."
