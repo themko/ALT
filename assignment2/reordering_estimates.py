@@ -10,42 +10,46 @@ def get_phrases_transitions(phrases_list,f_phrase_with_positions,e_phrase_with_p
     begin_f_phrase = f_phrase_with_positions[1]
     end_f_phrase = f_phrase_with_positions[2]
     e_phrase = e_phrase_with_positions[0]
-    
+    ## Because even if the next/previous phrases in phrase lists are empty, you still count the word
+    if len(phrases_list)==0:
+        print 'bailout'
+        fe_pairs[(f_phrase,e_phrase)]+=1
     if orientation == ORIENTATION_LR:
         for phrase in phrases_list:
-            print 'next e_phrase', phrase
+            #print 'next e_phrase', phrase
+            ##
             fe_pairs[(f_phrase,e_phrase)]+=1
-
             begin_f_next_phrase = phrase[0][1]
             end_f_next_phrase = phrase[0][2]
             #Check for monotone,swap,discontinuous
             if(begin_f_next_phrase == end_f_phrase +1):
-                print 'LR monotone'
+                #print 'LR monotone'
                 monotone[(f_phrase,e_phrase)] +=1
             elif(begin_f_phrase == end_f_next_phrase+1):
-                print 'LR swap'
+                #print 'LR swap'
                 swap[(f_phrase,e_phrase)] +=1
             else:
-                print 'LR discontinuous'
+                #print 'LR discontinuous'
                 discontinuous[(f_phrase,e_phrase)] +=1
-            print
+            #print
     else:
         for phrase in phrases_list:
-            print 'previous e_phrase', phrase
+            #print 'previous e_phrase', phrase
+            ##
             fe_pairs[(f_phrase,e_phrase)]+=1
-            print f_phrase, e_phrase, fe_pairs[(f_phrase,e_phrase)]
+            #print f_phrase, e_phrase, fe_pairs[(f_phrase,e_phrase)]
             begin_f_previous_phrase = phrase[0][1]
             end_f_previous_phrase = phrase[0][2]
             
             #Check conditions
             if(end_f_previous_phrase == begin_f_phrase -1):
-                print 'RL monotone'
+                #print 'RL monotone'
                 monotone[(f_phrase,e_phrase)] +=1
             elif(begin_f_phrase == end_f_previous_phrase-1):
-                print 'RL swap'
+                #print 'RL swap'
                 swap[(f_phrase,e_phrase)] +=1
             else:
-                print 'RL discontinuous'
+                #print 'RL discontinuous'
                 discontinuous[(f_phrase,e_phrase)] +=1
 
 
@@ -80,7 +84,7 @@ def reordering_estimates():
                 
                 alignments_f_e= {}
                 #Extract phrases
-                for e_line,f_line,al_line in zip(e_file,f_file,a_file)[1:2]:
+                for e_line,f_line,al_line in zip(e_file,f_file,a_file)[5:6]:
                     phrases_per_line_start = defaultdict(list)
                     phrases_per_line_end = defaultdict(list)
                     e_words = e_line.split()
@@ -148,17 +152,17 @@ def reordering_estimates():
                                     phrases_per_line_start[(e1)].append(((phrase_f,f1,f2),(phrase_e,e1,e2)))
                                     phrases_per_line_end[(e2)].append(((phrase_f,f1,f2),(phrase_e,e1,e2)))
 
-                    print f_line.strip()
-                    print e_line.rstrip()
+                    #print f_line.strip()
+                    #print e_line.rstrip()
                     #Run through all phrases of the e-sentence 
-                    print
+                    #print
                     print "L->R:"
                     #Iterate L->R over starting positiong of e-phrases
                     for start_pos_e in phrases_per_line_start:
                         phrases_list = phrases_per_line_start[start_pos_e]
                         for start_pos_phrase in phrases_list:
                             
-                            print 'start_pos_e',start_pos_e,'phrases:',start_pos_phrase
+                            #print 'start_pos_e',start_pos_e,'phrases:',start_pos_phrase
                             f_phrase_with_positions = start_pos_phrase[0]
                             e_phrase_with_positions = start_pos_phrase[1]
                             f_phrase = start_pos_phrase[0][0]
@@ -175,11 +179,11 @@ def reordering_estimates():
                                 #We assume that ends of sentences are monotone!
                                 #and that unaligned words are neither monotone,swap or disc.
                                 LR_fe_pairs[(f_phrase,e_phrase)]+=1
-                                LR_fe_word_pairs[(f_phrase,e_phrase)]+=1
+                                LR_fe_pairs_word[(f_phrase,e_phrase)]+=1
                                 
                                 #We assume then all positions are possible:
                                 if(end_e_phrase == len(e_words)-1):
-                                    print 'end'
+                                    #print 'end'
                                     monotone_LR[(f_phrase,e_phrase)] +=1
                                     monotone_word_LR[(f_phrase,e_phrase)] +=1
                             else:
@@ -207,7 +211,7 @@ def reordering_estimates():
                     for end_pos_e in reversed(phrases_per_line_end.keys()):
                         phrases_list = phrases_per_line_end[end_pos_e]
                         for end_pos_phrase in phrases_list:
-                            print 'end_pos_e',end_pos_e,'phrases:',end_pos_phrase
+                            #print 'end_pos_e',end_pos_e,'phrases:',end_pos_phrase
                             f_phrase_with_positions = end_pos_phrase[0]
                             e_phrase_with_positions = end_pos_phrase[1]
                             f_phrase = end_pos_phrase[0][0]
@@ -229,14 +233,14 @@ def reordering_estimates():
                                 RL_fe_pairs[(f_phrase,e_phrase)]+=1
                                 RL_fe_pairs_word[(f_phrase,e_phrase)]+=1
                                 if(begin_e_phrase == 0):
-                                    print 'begin'
+                                    #print 'begin'
                                     monotone_RL[(f_phrase,e_phrase)] +=1
                                     monotone_word_RL[(f_phrase,e_phrase)] +=1
 
                             else:
                                 # Phrase-based reordering probabilities
                                 prev_phrases_list = phrases_per_line_end[begin_e_phrase -1]
-                                print prev_phrases_list
+                                #print prev_phrases_list
                                 get_phrases_transitions(prev_phrases_list,f_phrase_with_positions,e_phrase_with_positions, monotone_RL, swap_RL, discontinuous_RL, RL_fe_pairs, ORIENTATION_RL)
                                 
                                 # Word-based reordering probabilities
@@ -250,8 +254,8 @@ def reordering_estimates():
                                     prev_words_list.append(((f_word,prev_f_pos,prev_f_pos),(e_word,prev_e_pos,prev_e_pos)))
                                     
                                 # monotone,swap and discontinuous dicts are updated by method
-                                get_phrases_transitions(prev_words_list,f_phrase_with_positions,e_phrase_with_positions, monotone_word_RL, swap_word_LR, discontinuous_word_LR, LR_fe_pairs_word, ORIENTATION_LR)
-
+                                get_phrases_transitions(prev_words_list,f_phrase_with_positions,e_phrase_with_positions, monotone_word_RL, swap_word_RL, discontinuous_word_RL, RL_fe_pairs_word, ORIENTATION_RL)
+                            #print 'current',f_phrase,e_phrase,'counter',RL_fe_pairs_word[(',',',')]
 
                 print "Writing phrases to file..."
                 # Write phrase-based reordering probabilities to phrase_file
@@ -271,6 +275,7 @@ def reordering_estimates():
 
                         phrases_file.write(f + " ||| " + e + " ||| " +  str(p_m_LR) + " " + str(p_s_LR )+ " " +str(p_d_LR) + " " +str(p_m_RL )+ " " + str(p_s_RL) + " " + str(p_d_RL)+"\n")
                 
+                print 'Writing words to file'
                 # Write word-based reordering probabilities to file
                 with open("reorder_est_wordbased.txt","w") as phrases_file_wordbased:
                     for f,e in phrases_f_e.iterkeys():
@@ -280,12 +285,10 @@ def reordering_estimates():
                         p_d_LR = 1.*discontinuous_word_LR[f,e]/LR_fe_pairs_word[(f,e)]
                         p_s_LR = 1.*swap_word_LR[f,e]/LR_fe_pairs_word[(f,e)]
                         #REMEMBER disc left & right!!
-                        print 'fe ',f,e,RL_fe_pairs_word[(f,e)]
-
+                        #print 'fe ',f,e,RL_fe_pairs_word[(f,e)]
                         p_m_RL = 1.* monotone_word_RL[(f,e)]/RL_fe_pairs_word[(f,e)]
                         p_s_RL = 1.*swap_word_RL[f,e]/RL_fe_pairs_word[(f,e)]
                         p_d_RL = 1.*discontinuous_word_RL[f,e]/RL_fe_pairs_word[(f,e)]
-
                         phrases_file_wordbased.write(f + " ||| " + e + " ||| " +  str(p_m_LR) + " " + str(p_s_LR )+ " " +str(p_d_LR) + " " +str(p_m_RL )+ " " + str(p_s_RL) + " " + str(p_d_RL)+"\n")
                     
     
