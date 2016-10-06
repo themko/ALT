@@ -272,7 +272,7 @@ def reordering_estimates():
                                 get_phrases_transitions(prev_words_list,f_phrase_with_positions,e_phrase_with_positions, monotone_word_RL, swap_word_RL, discontinuous_word_left_RL, discontinuous_word_right_RL, RL_fe_pairs_word, ORIENTATION_RL)
                             #print 'current',f_phrase,e_phrase,'counter',RL_fe_pairs_word[(',',',')]
 
-                print "Writing phrases to file..."
+                print "Writing phrase-based reordering probabilities to file..."
                 # Write phrase-based reordering probabilities to phrase_file
                 with open("reorder_est_phrasebased.txt","w") as phrases_file:
                     for f,e in phrases_f_e.iterkeys():
@@ -292,7 +292,7 @@ def reordering_estimates():
 
                         phrases_file.write(f + " ||| " + e + " ||| " +  str(p_m_LR) + " " + str(p_s_LR )+ " " +str(p_d_left_LR) + " "+str(p_d_right_LR) + " " +str(p_m_RL )+ " " + str(p_s_RL) + " " + str(p_d_left_RL)+" " + str(p_d_right_RL)+"\n")
                 
-                print 'Writing words to file'
+                print 'Writing word-based reordering probabilities to file'
                 # Write word-based reordering probabilities to file
                 with open("reorder_est_wordbased.txt","w") as phrases_file_wordbased:
                     for f,e in phrases_f_e.iterkeys():
