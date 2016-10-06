@@ -274,7 +274,7 @@ def reordering_estimates():
 
                 print "Writing phrases to file..."
                 # Write phrase-based reordering probabilities to phrase_file
-                with open("reorder_est.txt","w") as phrases_file:
+                with open("reorder_est_phrasebased.txt","w") as phrases_file:
                     for f,e in phrases_f_e.iterkeys():
                         # Phrase-based reordering
                         p_m_LR = 1.*monotone_LR[f,e]/LR_fe_pairs[(f,e)]
