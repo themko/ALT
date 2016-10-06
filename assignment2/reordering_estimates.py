@@ -12,7 +12,7 @@ def get_phrases_transitions(phrases_list,f_phrase_with_positions,e_phrase_with_p
     e_phrase = e_phrase_with_positions[0]
     ## Because even if the next/previous phrases in phrase lists are empty, you still count the word
     if len(phrases_list)==0:
-        print 'bailout'
+        #print 'bailout'
         fe_pairs[(f_phrase,e_phrase)]+=1
     if orientation == ORIENTATION_LR:
         for phrase in phrases_list:
@@ -99,7 +99,12 @@ def reordering_estimates():
                 
                 alignments_f_e= {}
                 #Extract phrases
-                for e_line,f_line,al_line in zip(e_file,f_file,a_file)[5:6]:
+                counter = 0
+                for e_line,f_line,al_line in zip(e_file,f_file,a_file):#[5:6]:
+                    
+                    if counter % 1000 == 0:
+                        print counter
+                    counter +=1 
                     phrases_per_line_start = defaultdict(list)
                     phrases_per_line_end = defaultdict(list)
                     e_words = e_line.split()
@@ -171,7 +176,7 @@ def reordering_estimates():
                     #print e_line.rstrip()
                     #Run through all phrases of the e-sentence 
                     #print
-                    print "L->R:"
+                    #print "L->R:"
                     #Iterate L->R over starting positiong of e-phrases
                     for start_pos_e in phrases_per_line_start:
                         phrases_list = phrases_per_line_start[start_pos_e]
@@ -220,8 +225,8 @@ def reordering_estimates():
                                 # monotone,swap and discontinuous dicts are updated by method
                                 get_phrases_transitions(next_words_list,f_phrase_with_positions,e_phrase_with_positions, monotone_word_LR, swap_word_LR, discontinuous_word_left_LR, discontinuous_word_right_LR, LR_fe_pairs_word, ORIENTATION_LR)
                     
-                    print
-                    print "R->L:"
+                    #print
+                    #print "R->L:"
                     #Iterate R->L over end positiong of e-phrases
                     for end_pos_e in reversed(phrases_per_line_end.keys()):
                         phrases_list = phrases_per_line_end[end_pos_e]
