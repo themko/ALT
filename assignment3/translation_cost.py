@@ -9,6 +9,18 @@ def is_float(num):
     except ValueError:
         return False
 
+def language_model_cost(phrases,lm,f_line):
+    score = 0
+    for phrase in phrases:    
+        e= phrase[1]
+        f_al_start =int(phrase[0].split('-')[0])
+        f_al_stop =int(phrase[0].split('-')[1])
+        #Get list of words from the f_line
+        f = f_line[f_al_start:f_al_stop+1]
+        f = ' '.join(f)
+        f_prob = lm[f][0]
+        score += (-1 * f_prob)
+    return score
 
 def read_phrase_table(file_name):
     print 'reading phrase table'
@@ -75,13 +87,14 @@ def translation_cost(p_table,lm):
                 f_line = f_line.split()
                 phrases = [tuple(p.split(':',1)) for p in trace]
                 print phrases
-                translation_model_cost = trans_model(phrases,p_table,f_line)
+                translation_model_cost = translation_model_cost(phrases,p_table,f_line)
                 print 'tm_cost',translation_model_cost
+                language_model_cost = language_model_cost(phrases, lm, f_line)
                 ###
                 language_model_cost = 0
                 reordering_model_cost = 0
 
-def trans_model(phrases,p_table,f_line):
+def translation_model_cost(phrases,p_table,f_line):
     model_output = 0
     #For the phrases in the trace give the four translation model weights
     for phrase in phrases:
@@ -108,10 +121,10 @@ def trans_model(phrases,p_table,f_line):
         
     return model_output
 
-phrase_table = read_phrase_table('phrase-table')
+#phrase_table = read_phrase_table('phrase-table')
 #language_model =read_language_model('file.en.lm')
 #phrase_table = 0
-language_model = 0
-translation_cost(phrase_table, language_model)
+#language_model = 0
+#translation_cost(phrase_table, language_model)
     
 
