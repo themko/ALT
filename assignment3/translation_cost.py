@@ -86,7 +86,7 @@ def translation_cost(p_table,lm):
                 trace = trace.split(' ||| ')
                 f_line = f_line.split()
                 phrases = [tuple(p.split(':',1)) for p in trace]
-                print phrases
+                #print phrases
                 translation_model_cost = translation_model_cost(phrases,p_table,f_line)
                 print 'tm_cost',translation_model_cost
                 language_model_cost = language_model_cost(phrases, lm, f_line)
@@ -98,33 +98,35 @@ def translation_model_cost(phrases,p_table,f_line):
     model_output = 0
     #For the phrases in the trace give the four translation model weights
     for phrase in phrases:
-        e= phrase[1]
+        e= phrase[1].rstrip()
         
         f_al_start =int(phrase[0].split('-')[0])
         f_al_stop =int(phrase[0].split('-')[1])
         #Get list of words from the f_line
         f = f_line[f_al_start:f_al_stop+1]
-        f = ' '.join(f)
-        print f_line
+        f = ' '.join(f).rstrip()
+        #print f_line
         try:
-            print phrase, (f,e)
-            print 'ptable_phrase', p_table[(f,e)]
+            #print (f,e)
+            #print 'ptable_phrase', p_table[(f,e)]
             p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
-            w_p_fe,w_lex_fe,w_p_ef,w_lex_ef,word_pen = -1,-1,-1,-1,-1
             #For now assumed to be the sum of all the probs
-            phrase_cost = -1*p_fe + -1 * lex_fe + -1*p_ef + -1*lex_ef + -1*word_pen
+            phrase_cost = 1*p_fe + 1 * lex_fe + 1*p_ef + 1*lex_ef + 1*word_pen
+            phrase_cost = -1*phrase_cost
         except KeyError:
-            print 'No key for: ',(f,e)
+            if f!= e:
+                print 'ERROR! No key for: ',(f,e)
+            ##IS this a good cost for a non-translated phrase?
             phrase_cost = 0
         #Assumes every phrase has equal importance. Summing over all of them
         model_output+= phrase_cost
         
     return model_output
 
-#phrase_table = read_phrase_table('phrase-table')
-#language_model =read_language_model('file.en.lm')
+phrase_table = read_phrase_table('phrase-table')
+language_model =read_language_model('file.en.lm')
 #phrase_table = 0
 #language_model = 0
-#translation_cost(phrase_table, language_model)
+translation_cost(phrase_table, language_model)
     
 
