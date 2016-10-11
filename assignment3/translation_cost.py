@@ -78,7 +78,30 @@ def read_language_model(file_name):
             pickle.dump(lms,lm_pickle)
     return lms
 
-def translation_cost(p_table,lm):
+def read_reordering_file(file_name):
+    print 'reading reordering file'
+    reorderings = {}
+    if(os.path.isfile('reorder.p')):
+        print '    now reading in pickle'
+        with open('reorder.p', 'rb') as reorder_pickle:
+            reorderings = pickle.load(reorder_pickle)
+    else:
+        ##
+        with open(file_name, 'r') as reorder_file:
+            for line in reorder_file:
+                line = line.split(' ||| ')
+                f = line[0]
+                e = line[1]
+                probs = [float(p) for p in line[2].split()]
+                #leaving alignments out
+                reorderings[(f,e)] = probs
+                
+        with open('reorder.p','wb') as reorder_pickle:
+            print '    dumping pickle'
+            pickle.dump(reorderings,reorder_pickle)    
+    return reorderings
+    
+def translation_cost(p_table,lm,reorder_file):
     print 'start'
     #Run through all the traces and calculate the total translation cost
     with open('testresults.trans.txt.trace','r') as traces:
@@ -88,14 +111,34 @@ def translation_cost(p_table,lm):
                 f_line = f_line.split()
                 phrases = [tuple(p.split(':',1)) for p in trace]
                 #print phrases
-                translation_model_cost = translation_model_cost(phrases,p_table,f_line)
-                print 'tm_cost',translation_model_cost
-                language_model_cost = language_model_cost(phrases, lm, f_line)
-                ###
+                reordering_model_cost = reorder_model(phrases,reorder_file,f_line)
+                translation_model_cost = trans_model(phrases,p_table,f_line)
+                if translation_model_cost >0:
+                    print 'ERROR! tm_cost',translation_model_cost, 'from', phrases
+                    ###
                 language_model_cost = 0
-                reordering_model_cost = 0
 
-def translation_model_cost(phrases,p_table,f_line):
+
+def reorder_model(phrases,reorder_file,f_line):
+    model_output= 0
+    for phrase in phrases:
+        e= phrase[1].rstrip()
+        f_al_start =int(phrase[0].split('-')[0])
+        f_al_stop =int(phrase[0].split('-')[1])
+        #Get list of words from the f_line
+        f = f_line[f_al_start:f_al_stop+1]
+        f = ' '.join(f).rstrip()
+        try:
+            probs = reorder_file[(f,e)]
+            rl_m,rl_s,rl_d,lr_m,lr_s,lr_d = probs
+            ##MOST LIKELY INCORRECT USE OF PROBS:
+            phrase_cost= (rl_m+rl_s+rl_d+lr_m+lr_s+lr_d)
+        except KeyError:
+            phrase_cost = 0
+        model_output += phrase_cost
+    return model_output
+
+def trans_model(phrases,p_table,f_line):
     model_output = 0
     #For the phrases in the trace give the four translation model weights
     for phrase in phrases:
@@ -111,10 +154,11 @@ def translation_model_cost(phrases,p_table,f_line):
             #print (f,e)
             #print 'ptable_phrase', p_table[(f,e)]
             p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
-            #For now assumed to be the sum of all the probs
+            #For now assumed to be the sum of all the probs (weighted by 1)
             phrase_cost = 1*p_fe + 1 * lex_fe + 1*p_ef + 1*lex_ef + 1*word_pen
             phrase_cost = -1*phrase_cost
         except KeyError:
+            #print 'KeyError',(f,e)
             if f!= e:
                 print 'ERROR! No key for: ',(f,e)
             ##IS this a good cost for a non-translated phrase?
@@ -124,8 +168,9 @@ def translation_model_cost(phrases,p_table,f_line):
         
     return model_output
 
-phrase_table = read_phrase_table('phrase-table')
-language_model =read_language_model('file.en.lm')
+reorder_file = read_reordering_file('dm_fe_0.75')
+#phrase_table = read_phrase_table('phrase-table')
+#language_model =read_language_model('file.en.lm')
 #phrase_table = 0
 #language_model = 0
 translation_cost(phrase_table, language_model)
