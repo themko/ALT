@@ -1,26 +1,14 @@
 import os.path
 import cPickle as pickle
-def translation_cost():
-    print 'start'
-    #Run through all the traces and calculate the total translation cost
-    with open('testresults.trans.txt.trace','r') as traces:
-        for trace in traces:
-            trace = trace.split(' ||| ')
-            phrases = [tuple(p.split(':',1)) for p in trace]
-            translation_model_cost = trans_model(phrases,phrase_table,)
-            ###
-            
+import time
+ 
 def is_float(num):
     try:
         float(num)
         return True
     except ValueError:
         return False
-def trans_model(phrases):
-    model_output = []
-    for phrase in phrases:
-        a = 0
-    return model_output
+
 
 def read_phrase_table(file_name):
     print 'reading phrase table'
@@ -77,9 +65,53 @@ def read_language_model(file_name):
             pickle.dump(lms,lm_pickle)
     return lms
 
+def translation_cost(p_table,lm):
+    print 'start'
+    #Run through all the traces and calculate the total translation cost
+    with open('testresults.trans.txt.trace','r') as traces:
+        with open('file.test.de') as f_file:
+            for f_line,trace in zip(f_file,traces):
+                trace = trace.split(' ||| ')
+                f_line = f_line.split()
+                phrases = [tuple(p.split(':',1)) for p in trace]
+                print phrases
+                translation_model_cost = trans_model(phrases,p_table,f_line)
+                print 'tm_cost',translation_model_cost
+                ###
+                language_model_cost = 0
+                reordering_model_cost = 0
+
+def trans_model(phrases,p_table,f_line):
+    model_output = 0
+    #For the phrases in the trace give the four translation model weights
+    for phrase in phrases:
+        e= phrase[1]
+        
+        f_al_start =int(phrase[0].split('-')[0])
+        f_al_stop =int(phrase[0].split('-')[1])
+        #Get list of words from the f_line
+        f = f_line[f_al_start:f_al_stop+1]
+        f = ' '.join(f)
+        print f_line
+        try:
+            print phrase, (f,e)
+            print 'ptable_phrase', p_table[(f,e)]
+            p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
+            w_p_fe,w_lex_fe,w_p_ef,w_lex_ef,word_pen = -1,-1,-1,-1,-1
+            #For now assumed to be the sum of all the probs
+            phrase_cost = -1*p_fe + -1 * lex_fe + -1*p_ef + -1*lex_ef + -1*word_pen
+        except KeyError:
+            print 'No key for: ',(f,e)
+            phrase_cost = 0
+        #Assumes every phrase has equal importance. Summing over all of them
+        model_output+= phrase_cost
+        
+    return model_output
+
 phrase_table = read_phrase_table('phrase-table')
 #language_model =read_language_model('file.en.lm')
-
-#translation_cost()
+#phrase_table = 0
+language_model = 0
+translation_cost(phrase_table, language_model)
     
 
