@@ -9,6 +9,18 @@ def is_float(num):
     except ValueError:
         return False
 
+def language_model_cost(phrases,lm,f_line):
+    score = 0
+    for phrase in phrases:    
+        e= phrase[1]
+        f_al_start =int(phrase[0].split('-')[0])
+        f_al_stop =int(phrase[0].split('-')[1])
+        #Get list of words from the f_line
+        f = f_line[f_al_start:f_al_stop+1]
+        f = ' '.join(f)
+        f_prob = lm[f][0]
+        score += (-1 * f_prob)
+    return score
 
 def read_phrase_table(file_name):
     print 'reading phrase table'
@@ -105,6 +117,7 @@ def translation_cost(p_table,lm,reorder_file):
                     ###
                 language_model_cost = 0
 
+
 def reorder_model(phrases,reorder_file,f_line):
     model_output= 0
     for phrase in phrases:
@@ -157,8 +170,8 @@ def trans_model(phrases,p_table,f_line):
 reorder_file = read_reordering_file('dm_fe_0.75')
 #phrase_table = read_phrase_table('phrase-table')
 #language_model =read_language_model('file.en.lm')
-language_model = 0
-phrase_table = 0
-translation_cost(phrase_table, language_model,reorder_file)
+#phrase_table = 0
+#language_model = 0
+translation_cost(phrase_table, language_model)
     
 
