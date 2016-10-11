@@ -19,7 +19,8 @@ def language_model_cost(phrases,lm,f_line):
         f = f_line[f_al_start:f_al_stop+1]
         f = ' '.join(f)
         f_prob = lm[f][0]
-        score += (-1 * f_prob)
+        # Calculate score by summing over log probabilities of words
+        score += (f_prob)
     return score
 
 def read_phrase_table(file_name):
