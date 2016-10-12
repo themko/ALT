@@ -112,7 +112,7 @@ def translation_cost(p_table,lm,reorder_file):
                 phrases = [tuple(p.split(':',1)) for p in trace]
                 #print phrases
                 reordering_model_cost = reorder_model(phrases,reorder_file,f_line)
-                translation_model_cost = trans_model(phrases,p_table,f_line)
+                translation_model_cost = translation_model_cost(phrases,p_table,f_line)
                 if translation_model_cost >0:
                     print 'ERROR! tm_cost',translation_model_cost, 'from', phrases
                     ###
@@ -138,7 +138,7 @@ def reorder_model(phrases,reorder_file,f_line):
         model_output += phrase_cost
     return model_output
 
-def trans_model(phrases,p_table,f_line):
+def translation_model_cost(phrases,p_table,f_line):
     model_output = 0
     #For the phrases in the trace give the four translation model weights
     for phrase in phrases:
@@ -169,8 +169,8 @@ def trans_model(phrases,p_table,f_line):
     return model_output
 
 reorder_file = read_reordering_file('dm_fe_0.75')
-#phrase_table = read_phrase_table('phrase-table')
-#language_model =read_language_model('file.en.lm')
+phrase_table = read_phrase_table('phrase-table')
+language_model =read_language_model('file.en.lm')
 #phrase_table = 0
 #language_model = 0
 translation_cost(phrase_table, language_model)
