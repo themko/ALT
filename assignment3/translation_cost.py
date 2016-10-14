@@ -1,6 +1,7 @@
 import os.path
 import cPickle as pickle
 import time
+import math
  
 def is_float(num):
     try:
@@ -132,19 +133,57 @@ def word_cost(w_n,history, lm, backoff=False):
     return cost
 
 
-def reorder_model_cost(phrase,reorder_file,f_line):
+
+def reorder_model_cost(phrase,trace,reorder_file,f_line):
+    #Get the index of the phrase in the trace sentence
+    phr_ind = ''.join([str(phrase[0]),':',str(phrase[1])])
+    
+    phr_position =  trace.index(phr_ind)
+    prev_phrase_align = trace[phr_position - 1].split(':')[0]
+    if (phr_position != len(trace)-1):
+        next_phrase_align = trace[phr_position + 1].split(':')[0]
+    else:
+        next_phrase_align = 'end-end'
+    next_phrase_align_begin, next_phrase_align_end = next_phrase_align.split('-')
+    prev_phrase_align_begin, prev_phrase_align_end = prev_phrase_align.split('-')
+
     model_output= 0
     e= phrase[1].rstrip()
-    f_al_start =int(phrase[0].split('-')[0])
-    f_al_stop =int(phrase[0].split('-')[1])
+    f_al_begin =int(phrase[0].split('-')[0])
+    f_al_end =int(phrase[0].split('-')[1])
+
     #Get list of words from the f_line
-    f = f_line[f_al_start:f_al_stop+1]
+    f = f_line[f_al_begin:f_al_end+1]
     f = ' '.join(f).rstrip()
     try:
         probs = reorder_file[(f,e)]
         rl_m,rl_s,rl_d,lr_m,lr_s,lr_d = probs
-        ##MOST LIKELY INCORRECT USE OF PROBS:
-        phrase_cost= (rl_m+rl_s+rl_d+lr_m+lr_s+lr_d)
+        RL_cost = 0
+        LR_cost = 0
+        #Check if phrase is first in sentence
+        if phr_position == 0:
+            RL_cost = rl_m
+        else:
+            if (int(prev_phrase_align_end) == f_al_begin -1):
+                RL_cost = rl_m
+            elif (int(prev_phrase_align_begin) == f_al_end + 1):
+                RL_cost = rl_s
+            else:
+                RL_cost = rl_d
+        #Check if phrase is last in sentence
+        if phr_position == len(trace) -1 :
+            LR_cost = lr_m
+        else:
+            if int(next_phrase_align_begin) == f_al_end +1:
+                LR_cost = lr_m
+            elif int(next_phrase_align_end) == f_al_begin -1:
+                LR_cost = lr_s
+            else:
+                LR_cost = lr_d
+        #Assumed that probabilities of both directions are multiplied with eachother
+        phrase_cost = LR_cost * RL_cost
+        #Take log-probability
+        phrase_cost = math.log10(phrase_cost)
     except KeyError:
         phrase_cost = 0
     model_output += phrase_cost
@@ -208,14 +247,12 @@ def translation_cost(p_table,lm,reorder_file):
                     phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost
                     cost_per_phrase.append(phrase_cost)
                 sentence_cost = sum(cost_per_phrase)
+                print sentence_cost
                 sentence_cost_list.append(sentence_cost)
     
+reorder_file = read_reordering_file('dm_fe_0.75')
+phrase_table = 0#read_phrase_table('phrase-table')
+language_model =0#read_language_model('file.en.lm')
 
-#reorder_file = read_reordering_file('dm_fe_0.75')
-#phrase_table = read_phrase_table('phrase-table')
-language_model =read_language_model('file.en.lm')
-phrase_table = 0
-reorder_file = 0
 translation_cost(phrase_table, language_model,reorder_file)
-    
 
