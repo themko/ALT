@@ -184,6 +184,7 @@ def reorder_model_cost(phrase,trace,reorder_file,f_line):
         phrase_cost = LR_cost * RL_cost
         #Take log-probability
         phrase_cost = math.log10(phrase_cost)
+        phrase_cost *= -1
     except KeyError:
         phrase_cost = 0
     model_output += phrase_cost
@@ -204,7 +205,7 @@ def translation_model_cost(phrase,p_table,f_line):
         #print 'ptable_phrase', p_table[(f,e)]
         p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
         #For now assumed to be the sum of all the probs (weighted by 1)
-        phrase_cost = 1*p_fe + 1 * lex_fe + 1*p_ef + 1*lex_ef + 1*word_pen
+        phrase_cost = 1*math.log10(p_fe) + 1 * math.log10(lex_fe) + 1*math.log10(p_ef) + 1*math.log10(lex_ef) + 1*word_pen
         phrase_cost = -1*phrase_cost
     except KeyError:
         #print 'KeyError',(f,e)
@@ -244,15 +245,20 @@ def translation_cost(p_table,lm,reorder_file):
                     if i ==len(phrases):
                         phrase_lm = phrase[1] + " </s>"
                     phrase_language_model_cost = language_model_cost(phrase_lm, lm)
-                    phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost
+                    print "Language model: " + str(phrase_language_model_cost)
+                    print "Translation model: " + str(phrase_translation_model_cost)
+                    print "Reordering model: " + str(phrase_reordering_model_cost)
+                    phrase_penalty = 1
+                    phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost + 1 * phrase_penalty
+                    print "Phrase cost: " + str(phrase_cost)
                     cost_per_phrase.append(phrase_cost)
                 sentence_cost = sum(cost_per_phrase)
                 print sentence_cost
                 sentence_cost_list.append(sentence_cost)
     
-reorder_file = read_reordering_file('dm_fe_0.75')
+reorder_file = 0#read_reordering_file('dm_fe_0.75')
 phrase_table = 0#read_phrase_table('phrase-table')
-language_model =0#read_language_model('file.en.lm')
+language_model =read_language_model('file.en.lm')
 
 translation_cost(phrase_table, language_model,reorder_file)
 
