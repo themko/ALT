@@ -100,24 +100,25 @@ def language_model_cost(phrase,lm):
         history = [words[pos] for pos in history_pos]
         
         w_n = words[cur_pos]
-        print "w_n: ", str(w_n) + ", history: " + str(history)
+        #print "w_n: ", str(w_n) + ", history: " + str(history)
         # Language model of a phrase is sum of p(w_n| w1,...,w_{n-1}) for every w_n
         cost_word = word_cost(w_n,history, lm)
         cost += cost_word
-        print "total cost: " + str(cost_word)
+        #print "total cost: " + str(cost_word)
+    cost *= -1
     return cost
 
 # Recursive method for backoff
 def word_cost(w_n,history, lm, backoff=False):
-    print "    w_n: ", str(w_n) + ", history: " + str(history)
+    #print "    w_n: ", str(w_n) + ", history: " + str(history)
     cost = 0
     n_gram = ' '.join(history + [w_n])
-    print "    n_gram: " + n_gram
+    #print "    n_gram: " + n_gram
     if n_gram in lm:
-        print "    normal cost: " + str(lm[n_gram][0])
+        #print "    normal cost: " + str(lm[n_gram][0])
         cost = lm[n_gram][0]
         if backoff:
-            print "    backoff cost: " + str(lm[n_gram][1])
+            #print "    backoff cost: " + str(lm[n_gram][1])
             cost += lm[n_gram][1]
     else:
         # n-gram not available
