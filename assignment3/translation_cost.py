@@ -52,10 +52,10 @@ def read_language_model(file_name):
                     prob = float(line[0])
                     if is_float(line[-1]):
                         backoff_prob = float(line[-1])
-                        words = line[1:-2]
+                        words = line[1:-1]
                     else:
                         backoff_prob = 0
-                        words = line[1:-1]
+                        words = line[1:]
                     #Pass phrase as key for probabilities
                     f = ' '.join(words)
                     lms[f] = (prob,backoff_prob)
@@ -88,18 +88,48 @@ def read_reordering_file(file_name):
     return reorderings
     
  
-def language_model_cost(phrase,lm,f_line):
-    score = 0
-    e= phrase[1]
-    f_al_start =int(phrase[0].split('-')[0])
-    f_al_stop =int(phrase[0].split('-')[1])
-    #Get list of words from the f_line
-    f = f_line[f_al_start:f_al_stop+1]
-    f = ' '.join(f)
-    f_prob = lm[f][0]
-    # Calculate score by summing over log probabilities of words
-    score += (f_prob)
-    return score
+def language_model_cost(phrase,lm):
+    cost = 0
+    e= phrase
+    words = e.split()
+    # For all words w_n in phrase
+    for cur_pos in range(0,len(words)):
+        # History: w1,...w_{n-1}
+        history_pos = range(0,cur_pos)
+        history = [words[pos] for pos in history_pos]
+        
+        w_n = words[cur_pos]
+        print "w_n: ", str(w_n) + ", history: " + str(history)
+        # Language model of a phrase is sum of p(w_n| w1,...,w_{n-1}) for every w_n
+        cost_word = word_cost(w_n,history, lm)
+        cost += cost_word
+        print "total cost: " + str(cost_word)
+    return cost
+
+# Recursive method for backoff
+def word_cost(w_n,history, lm, backoff=False):
+    print "    w_n: ", str(w_n) + ", history: " + str(history)
+    cost = 0
+    n_gram = ' '.join(history + [w_n])
+    print "    n_gram: " + n_gram
+    if n_gram in lm:
+        print "    normal cost: " + str(lm[n_gram][0])
+        cost = lm[n_gram][0]
+        if backoff:
+            print "    backoff cost: " + str(lm[n_gram][1])
+            cost += lm[n_gram][1]
+    else:
+        # n-gram not available
+        if len(history) > 0:
+            #backoff to shorter history w_2...w_{n-1}
+            #print "backoff"
+            new_history = history[1:]
+            # Recursive call of word_cost, and add backoff probability
+            cost = word_cost(w_n,new_history, lm, backoff=True)
+        else:
+            # Assign cost=0 if unigram is not available
+            cost = 0
+    return cost
 
 
 def reorder_model_cost(phrase,reorder_file,f_line):
@@ -159,24 +189,33 @@ def translation_cost(p_table,lm,reorder_file):
                 phrases = [tuple(p.split(':',1)) for p in trace]
                 #print phrases
                 cost_per_phrase = []
-                for phrase in phrases:
-                    phrase_reordering_model_cost = reorder_model_cost(phrase,reorder_file,f_line)
-                    phrase_translation_model_cost = translation_model_cost(phrase,p_table,f_line)
+                for i in range(0,len(phrases)):
+                    phrase = phrases[i]
+                    print phrase
+                    phrase_reordering_model_cost = 0 # reorder_model_cost(phrase,reorder_file,f_line)
+                    phrase_translation_model_cost = 0 # translation_model_cost(phrase,p_table,f_line)
                     if phrase_translation_model_cost >0:
                         print 'ERROR! tm_cost',phrase_translation_model_cost, 'from', phrase
                         ###
-                    phrase_language_model_cost = 0
+                    # For the language model, start and end symbols have to be added to the phrase
+                    # Positions in the foreign phrase are discarded.
+                    phrase_lm = phrase[1]
+                    if i==0:
+                        phrase_lm = "<s> " + phrase[1]
+                    if i ==len(phrases):
+                        phrase_lm = phrase[1] + " </s>"
+                    phrase_language_model_cost = language_model_cost(phrase_lm, lm)
                     phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost
                     cost_per_phrase.append(phrase_cost)
                 sentence_cost = sum(cost_per_phrase)
                 sentence_cost_list.append(sentence_cost)
     
 
-reorder_file = read_reordering_file('dm_fe_0.75')
-phrase_table = read_phrase_table('phrase-table')
+#reorder_file = read_reordering_file('dm_fe_0.75')
+#phrase_table = read_phrase_table('phrase-table')
 language_model =read_language_model('file.en.lm')
-#phrase_table = 0
-#language_model = 0
+phrase_table = 0
+reorder_file = 0
 translation_cost(phrase_table, language_model,reorder_file)
     
 
