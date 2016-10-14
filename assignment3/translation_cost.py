@@ -1,6 +1,7 @@
 import os.path
 import cPickle as pickle
 import time
+import math
  
 def is_float(num):
     try:
@@ -103,20 +104,14 @@ def language_model_cost(phrase,lm,f_line):
 
 
 def reorder_model_cost(phrase,trace,reorder_file,f_line):
-    print phrase
-    print trace
-    
     #Get the index of the phrase in the trace sentence
     phr_ind = ''.join([str(phrase[0]),':',str(phrase[1])])
     
-    #print phr_ind
-    #Find the other phrases
     phr_position =  trace.index(phr_ind)
     prev_phrase_align = trace[phr_position - 1].split(':')[0]
     if (phr_position != len(trace)-1):
         next_phrase_align = trace[phr_position + 1].split(':')[0]
     else:
-        print 'end'
         next_phrase_align = 'end-end'
     next_phrase_align_begin, next_phrase_align_end = next_phrase_align.split('-')
     prev_phrase_align_begin, prev_phrase_align_end = prev_phrase_align.split('-')
@@ -125,10 +120,7 @@ def reorder_model_cost(phrase,trace,reorder_file,f_line):
     e= phrase[1].rstrip()
     f_al_begin =int(phrase[0].split('-')[0])
     f_al_end =int(phrase[0].split('-')[1])
-    #print 'begin,end: ',f_al_begin, f_al_end
-    #print 'prev_begin,end:', prev_phrase_align_begin, prev_phrase_align_end
-    #print 'next_begin,end:', next_phrase_align_begin, next_phrase_align_end
-    
+
     #Get list of words from the f_line
     f = f_line[f_al_begin:f_al_end+1]
     f = ' '.join(f).rstrip()
@@ -139,39 +131,28 @@ def reorder_model_cost(phrase,trace,reorder_file,f_line):
         LR_cost = 0
         #Check if phrase is first in sentence
         if phr_position == 0:
-            print 'RL_mono'
             RL_cost = rl_m
         else:
-            print int(prev_phrase_align_end)
-            print f_al_begin -1
             if (int(prev_phrase_align_end) == f_al_begin -1):
                 RL_cost = rl_m
-                print 'RL mono'
             elif (int(prev_phrase_align_begin) == f_al_end + 1):
-                print 'RL swap'
                 RL_cost = rl_s
             else:
-                print 'RL disc'
-                Rl_cost = rl_d
+                RL_cost = rl_d
         #Check if phrase is last in sentence
         if phr_position == len(trace) -1 :
-            print 'LR_mono'
             LR_cost = lr_m
         else:
-            print int(next_phrase_align_begin)
-            print f_al_end +1
             if int(next_phrase_align_begin) == f_al_end +1:
                 LR_cost = lr_m
-                print 'LR mono'
             elif int(next_phrase_align_end) == f_al_begin -1:
                 LR_cost = lr_s
-                print 'LR swap'
             else:
                 LR_cost = lr_d
-                print 'LR disc'
         #Assumed that probabilities of both directions are multiplied with eachother
         phrase_cost = LR_cost * RL_cost
-
+        #Take log-probability
+        phrase_cost = math.log10(phrase_cost)
     except KeyError:
         phrase_cost = 0
     model_output += phrase_cost
@@ -227,14 +208,11 @@ def translation_cost(p_table,lm,reorder_file):
                     phrase_cost = phrase_reordering_model_cost
                     cost_per_phrase.append(phrase_cost)
                 sentence_cost = sum(cost_per_phrase)
+                print sentence_cost
                 sentence_cost_list.append(sentence_cost)
     
-
 reorder_file = read_reordering_file('dm_fe_0.75')
 phrase_table = 0#read_phrase_table('phrase-table')
 language_model =0#read_language_model('file.en.lm')
-#phrase_table = 0
-#language_model = 0
-translation_cost(phrase_table, language_model,reorder_file)
-    
 
+translation_cost(phrase_table, language_model,reorder_file)
