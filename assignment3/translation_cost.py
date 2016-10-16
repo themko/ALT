@@ -257,10 +257,13 @@ def translation_cost(p_table,lm,reorder_file):
                         print "Reordering model: " + str(phrase_reordering_model_cost)
                         phrase_penalty = 1
                         phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost + 1 * phrase_penalty
-                        print "Phrase cost: " + str(phrase_cost)
+                        print "Total phrase cost: " + str(phrase_cost)
                         cost_per_phrase.append(phrase_cost)
+                        
+                        # Write phrase, model costs for this phrase, and  total phrase cost
+                        output_file.write(trace[i] + " lm:" + str(phrase_language_model_cost) + " tm:" + str(phrase_translation_model_cost) + " rm:" + str(phrase_reordering_model_cost) + " total phrase:" + str(phrase_cost) + " ||| ")
                     sentence_cost = sum(cost_per_phrase)
-                    output_file.write(str(sentence_cost)+"\n")
+                    output_file.write("Sentence cost:" + str(sentence_cost)+"\n")
     
 reorder_file = 0#read_reordering_file('dm_fe_0.75')
 phrase_table = 0#read_phrase_table('phrase-table')
