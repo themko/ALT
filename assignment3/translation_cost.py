@@ -105,31 +105,31 @@ def language_model_cost(phrase,lm):
         if cur_pos == 0 and w_n == "<s>":
             continue
         
-        print "w_n: ", str(w_n) + ", history: " + str(history)
+        ##print "w_n: ", str(w_n) + ", history: " + str(history)
         # Language model of a phrase is sum of p(w_n| w1,...,w_{n-1}) for every w_n
         cost_word = word_cost(w_n,history, lm)
         cost += cost_word
-        print "total cost: " + str(cost_word)
-    cost *= -1
+        ##print "total cost: " + str(cost_word)
+    cost *= 1#-1
     return cost
 
 # Recursive method for backoff
 def word_cost(w_n,history, lm, backoff=False):
-    print "    w_n: ", str(w_n) + ", history: " + str(history)
+    ##print "    w_n: ", str(w_n) + ", history: " + str(history)
     cost = 0
     n_gram = ' '.join(history + [w_n])
-    print "    n_gram: " + n_gram
+    ##print "    n_gram: " + n_gram
     if n_gram in lm:
-        print "    normal cost: " + str(lm[n_gram][0])
+        ##print "    normal cost: " + str(lm[n_gram][0])
         cost = lm[n_gram][0]
         if backoff:
-            print "    backoff cost: " + str(lm[n_gram][1])
+            ##print "    backoff cost: " + str(lm[n_gram][1])
             cost += lm[n_gram][1]
     else:
         # n-gram not available
         if len(history) > 0:
             #backoff to shorter history w_2...w_{n-1}
-            print "backoff"
+            ##print "backoff"
             new_history = history[1:]
             # Recursive call of word_cost, and add backoff probability
             cost = word_cost(w_n,new_history, lm, backoff=True)
@@ -190,7 +190,7 @@ def reorder_model_cost(phrase,trace,reorder_file,f_line):
         phrase_cost = LR_cost * RL_cost
         #Take log-probability
         phrase_cost = math.log10(phrase_cost)
-        phrase_cost *= -1
+        phrase_cost *= 1#-1
     except KeyError:
         phrase_cost = 0
     model_output += phrase_cost
@@ -212,7 +212,7 @@ def translation_model_cost(phrase,p_table,f_line):
         p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
         #For now assumed to be the sum of all the probs (weighted by 1)
         phrase_cost = 1*math.log10(p_fe) + 1 * math.log10(lex_fe) + 1*math.log10(p_ef) + 1*math.log10(lex_ef) + 1*word_pen
-        phrase_cost = -1*phrase_cost
+        phrase_cost = phrase_cost * 1 #-1
     except KeyError:
         #print 'KeyError',(f,e)
         if f!= e:
@@ -239,9 +239,9 @@ def translation_cost(p_table,lm,reorder_file):
                     for i in range(0,len(phrases)):
                         phrase = phrases[i]
                         print phrase
-                        phrase_reordering_model_cost = 0 # reorder_model_cost(phrase,reorder_file,f_line)
-                        phrase_translation_model_cost = 0 # translation_model_cost(phrase,p_table,f_line)
-                        if phrase_translation_model_cost >0:
+                        phrase_reordering_model_cost =  reorder_model_cost(phrase,trace,reorder_file,f_line)
+                        phrase_translation_model_cost =  translation_model_cost(phrase,p_table,f_line)
+                        if phrase_translation_model_cost <0:
                             print 'ERROR! tm_cost',phrase_translation_model_cost, 'from', phrase
                             ###
                         # For the language model, start and end symbols have to be added to the phrase
@@ -252,12 +252,12 @@ def translation_cost(p_table,lm,reorder_file):
                         if i ==len(phrases):
                             phrase_lm = phrase[1] + " </s>"
                         phrase_language_model_cost = language_model_cost(phrase_lm, lm)
-                        print "Language model: " + str(phrase_language_model_cost)
-                        print "Translation model: " + str(phrase_translation_model_cost)
-                        print "Reordering model: " + str(phrase_reordering_model_cost)
-                        phrase_penalty = 1
+                        ##print "Language model: " + str(phrase_language_model_cost)
+                        ##print "Translation model: " + str(phrase_translation_model_cost)
+                        ##print "Reordering model: " + str(phrase_reordering_model_cost)
+                        phrase_penalty = -1 ##1
                         phrase_cost = 1 * phrase_reordering_model_cost + 1 * phrase_translation_model_cost + 1 * phrase_language_model_cost + 1 * phrase_penalty
-                        print "Total phrase cost: " + str(phrase_cost)
+                        ##print "Total phrase cost: " + str(phrase_cost)
                         cost_per_phrase.append(phrase_cost)
                         
                         # Write phrase, model costs for this phrase, and  total phrase cost
@@ -265,8 +265,8 @@ def translation_cost(p_table,lm,reorder_file):
                     sentence_cost = sum(cost_per_phrase)
                     output_file.write("Sentence cost:" + str(sentence_cost)+"\n")
     
-reorder_file = 0#read_reordering_file('dm_fe_0.75')
-phrase_table = 0#read_phrase_table('phrase-table')
+reorder_file = read_reordering_file('dm_fe_0.75')
+phrase_table = read_phrase_table('phrase-table')
 language_model =read_language_model('file.en.lm')
 
 translation_cost(phrase_table, language_model,reorder_file)
