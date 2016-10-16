@@ -196,7 +196,8 @@ def reorder_model_cost(phrase,trace,reorder_file,f_line):
         phrase_cost = math.log10(phrase_cost)
         phrase_cost *= 1#-1
     except KeyError:
-        phrase_cost = 0
+        #A rough score for the inaccessable p's of an untranslated phrase
+        phrase_cost = -1
     model_output += phrase_cost
     return model_output
 
@@ -209,20 +210,16 @@ def translation_model_cost(phrase,p_table,f_line):
     #Get list of words from the f_line
     f = f_line[f_al_start:f_al_stop+1]
     f = ' '.join(f).rstrip()
-    #print f_line
     try:
-        #print (f,e)
-        #print 'ptable_phrase', p_table[(f,e)]
         p_fe,lex_fe,p_ef,lex_ef, word_pen = p_table[(f,e)]
         #For now assumed to be the sum of all the probs (weighted by 1)
         phrase_cost = 1*math.log10(p_fe) + 1 * math.log10(lex_fe) + 1*math.log10(p_ef) + 1*math.log10(lex_ef) + 1*word_pen
         phrase_cost = phrase_cost * 1 #-1
     except KeyError:
-        #print 'KeyError',(f,e)
         if f!= e:
             print 'ERROR! No key for: ',(f,e)
-        ##IS this a good cost for a non-translated phrase?
-        phrase_cost = 0
+        ##A very rough score for a non-translated phrase
+        phrase_cost = -1
     #Assumes every phrase has equal importance. Summing over all of them
     return phrase_cost
     
