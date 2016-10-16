@@ -242,11 +242,8 @@ def translation_cost(p_table,lm,min_lm_prob, reorder_file):
                     for i in range(0,len(phrases)):
                         phrase = phrases[i]
                         #print phrase
-                        phrase_reordering_model_cost =  0#reorder_model_cost(phrase,trace,reorder_file,f_line)
-                        phrase_translation_model_cost =  0#translation_model_cost(phrase,p_table,f_line)
-                        if phrase_translation_model_cost <0:
-                            print 'ERROR! tm_cost',phrase_translation_model_cost, 'from', phrase
-                            ###
+                        phrase_reordering_model_cost =  reorder_model_cost(phrase,trace,reorder_file,f_line)
+                        phrase_translation_model_cost =  translation_model_cost(phrase,p_table,f_line)
                         # For the language model, start and end symbols have to be added to the phrase
                         # Positions in the foreign phrase are discarded.
                         phrase_lm = phrase[1]
@@ -264,12 +261,12 @@ def translation_cost(p_table,lm,min_lm_prob, reorder_file):
                         cost_per_phrase.append(phrase_cost)
                         
                         # Write phrase, model costs for this phrase, and  total phrase cost
-                        output_file.write(trace[i] + " lm:" + str(phrase_language_model_cost) + " tm:" + str(phrase_translation_model_cost) + " rm:" + str(phrase_reordering_model_cost) + " total phrase:" + str(phrase_cost) + " ||| ")
+                        output_file.write(trace[i].rstrip() + " lm:" + str(phrase_language_model_cost) + " tm:" + str(phrase_translation_model_cost) + " rm:" + str(phrase_reordering_model_cost) + " total phrase:" + str(phrase_cost) + " ||| ")
                     sentence_cost = sum(cost_per_phrase)
                     output_file.write("Sentence cost:" + str(sentence_cost)+"\n")
     
-reorder_file = 0#read_reordering_file('dm_fe_0.75')
-phrase_table = 0#read_phrase_table('phrase-table')
+reorder_file = read_reordering_file('dm_fe_0.75')
+phrase_table = read_phrase_table('phrase-table')
 language_model, min_lm_prob = read_language_model('file.en.lm')
 
 translation_cost(phrase_table, language_model,min_lm_prob, reorder_file)
